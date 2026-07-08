@@ -154,6 +154,11 @@
       transition: opacity 0.5s ease;
     }
 
+    /* 📌 공지사항 화면이 항상 최상단에 오도록 z-index 수정 */
+    #globalNoticeScreen {
+      z-index: 30 !important;
+    }
+
     .overlayScreen h1 {
       font-size: 54px;
       font-weight: 700;
@@ -386,11 +391,11 @@
       display: none !important;
     }
 
-    /* 📌 정사각형 실시간 공지사항 버튼 스타일 */
+    /* 정사각형 실시간 공지사항 버튼 스타일 */
     #globalNoticeBtn {
       position: absolute;
       top: 25px;
-      right: 35px; /* 시작 화면 우측 끝 배치 */
+      right: 35px;
       width: 50px;
       height: 50px;
       padding: 0;
@@ -443,6 +448,7 @@
     <div id="bossWarning">⚠ BOSS STAGE ⚠</div>
     <canvas id="gameCanvas" width="1200" height="675"></canvas>
 
+    <!-- 공지사항 화면 -->
     <div id="globalNoticeScreen" class="overlayScreen hidden">
       <h1 style="font-size: 42px; margin-bottom: 25px;">📢 실시간 사막 소식</h1>
       <div class="manual-content" style="width: 500px; max-height: 350px; overflow-y: auto;">
@@ -453,6 +459,7 @@
       <button onclick="closeGlobalNotice(event)" class="ui-button">닫기</button>
     </div>
 
+    <!-- 시작 화면 -->
     <div id="startScreen" class="overlayScreen">
       <button id="globalNoticeBtn" onclick="openGlobalNotice(event)" title="📢 공지사항">📢</button>
       <h1>여정의 시작</h1>
