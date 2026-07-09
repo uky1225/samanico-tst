@@ -41,13 +41,10 @@
       box-sizing: border-box;
     }
 
+    /* 수정 후 CSS: 픽셀레이티드 옵션 제거 */
     canvas {
       display: block;
       border-radius: 16px;
-      image-rendering: -moz-crisp-edges;
-      image-rendering: -webkit-crisp-edges;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
     }
 
     #scoreBoard {
@@ -498,9 +495,9 @@
         <p><strong>🏜️ 기본 목표:</strong> 다가오는 장애물을 피해 최대한 멀리 나아가세요. 오래 살아남을수록 속도가 점차 빨라집니다.</p>
         <p><strong>🌵 장애물:</strong> 지상 장애물은 점프(위쪽)로, 공중 장애물은 웅크리기(아래쪽)로 회피하세요.</p>
         <p><strong>🟩 초록색 발판:</strong> 초록색으로 된 발판은 점프해서 안전하게 밟고 올라갈 수 있습니다!</p>
-        <p><strong>👿 보스 전투:</strong> 1000점 단위로 보스가 등장합니다. 그 이후2000점이 지날때 마다 보스가 등장하며 보스전 중에는 설정한 <strong>[공격키]</strong>를 눌러 탄환을 발사할 수 있습니다.(보스전을 오래 끌면 불리해요.)</p>
+        <p><strong>👿 보스 전투:</strong> 1000점 단위로 보스가 등장합니다. 그 이후 2000점이 지날때 마다 보스가 등장하며 보스전 중에는 설정한 <strong>[공격키]</strong>를 눌러 탄환을 발사할 수 있습니다.(보스전을 오래 끌면 불리해요.)</p>
         <p><strong>⚔️ 보상:</strong> 보스를 처치하면 보상을 얻고 다음 보스를 더 쉽게 물리칩니다!</p>
-        <p><strong>웹 업데이트:</strong> 웹 새로고침을 하면 게임을 업데이트 할수 있습니다. </p>*공지사항도 확인해주세요.*</p>
+        <p><strong>웹 업데이트:</strong> 웹 새로고침을 하면 게임을 업데이트 할수 있습니다. *공지사항도 확인해주세요.*</p>
       </div>
       <button id="closeHowToPlayBtn" class="ui-button">닫기</button>
     </div>
@@ -655,6 +652,7 @@
     player.y = groundY - player.height;
     let obstacles = [];
     let dunes = [];
+
     /* --- 오디오 시스템 오실레이터 방식 구현 --- */
     let audioCtx = null;
     let bgmGain = null;
@@ -674,7 +672,6 @@
     function updateVolume() {
       if (!audioCtx) return;
       const vol = bgmVolume.value / 100;
-      // 너무 시끄럽지 않게 계수 조절
       bgmGain.gain.setValueAtTime(vol * 0.15, audioCtx.currentTime);
       sfxGain.gain.setValueAtTime(vol * 0.4, audioCtx.currentTime);
     }
@@ -724,7 +721,6 @@
     function startBGM() {
       if (!audioCtx) return;
       if (bgmInterval) clearInterval(bgmInterval);
-      // 신비롭고 웅장한 아라비안/마이너 풍의 절제된 베이스 루프
       const normalNotes = [147, 165, 175, 196, 220, 196, 175, 165];
       const bossNotes = [110, 117, 110, 117, 131, 123, 110, 98];
       let step = 0;
@@ -748,8 +744,7 @@
         step++;
       }, 400);
     }
-    /* ----------------------------------------------- */
-    // 1. openGlobalNotice 함수 수정 (JSON.stringify 제거)
+
     async function openGlobalNotice(e) {
       if (e) e.stopPropagation();
       const listContainer = document.getElementById('globalNoticeList');
@@ -765,7 +760,7 @@
         const data = await response.json();
         listContainer.innerHTML = '';
         if (Array.isArray(data) && data.length > 0) {
-          localStorage.setItem('lastViewedNotice', data[0]); // 수정된 부분
+          localStorage.setItem('lastViewedNotice', data[0]);
           badge.style.display = 'none';
           data.forEach(text => {
             const li = document.createElement('li');
@@ -780,7 +775,7 @@
         listContainer.innerHTML = '<li style="color:#ff0055;">소식을 불러오지 못했습니다. 앱스 스크립트 웹앱 주소 및 배포 상태를 확인해주세요.</li>';
       }
     }
-    // 2. checkNewNotices 함수 수정 (순수 문자열 비교)
+
     async function checkNewNotices() {
       const badge = document.getElementById('noticeBadge');
       try {
@@ -788,7 +783,7 @@
         const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
           const lastSeen = localStorage.getItem('lastViewedNotice');
-          if (lastSeen !== data[0]) { // 수정된 부분
+          if (lastSeen !== data[0]) {
             badge.style.display = 'flex';
           } else {
             badge.style.display = 'none';
@@ -869,6 +864,7 @@
         }
       });
     }
+
     howToPlayBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     howToPlayBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     howToPlayBtn.addEventListener('click', (e) => {
@@ -876,6 +872,7 @@
       startScreen.classList.add('hidden');
       howToPlayScreen.classList.remove('hidden');
     });
+
     closeHowToPlayBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     closeHowToPlayBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     closeHowToPlayBtn.addEventListener('click', (e) => {
@@ -883,6 +880,7 @@
       howToPlayScreen.classList.add('hidden');
       startScreen.classList.remove('hidden');
     });
+
     settingsBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     settingsBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     settingsBtn.addEventListener('click', (e) => {
@@ -891,6 +889,7 @@
       startScreen.classList.add('hidden');
       settingsScreen.classList.remove('hidden');
     });
+
     closeSettingsBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     closeSettingsBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     closeSettingsBtn.addEventListener('click', (e) => {
@@ -901,6 +900,7 @@
       settingsScreen.classList.add('hidden');
       startScreen.classList.remove('hidden');
     });
+
     resetSettingsBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     resetSettingsBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     resetSettingsBtn.addEventListener('click', (e) => {
@@ -913,6 +913,7 @@
       updateRebindButtonsUI();
       updateControlInfoUI();
     });
+
     document.querySelectorAll('.rebind-btn').forEach(btn => {
       btn.addEventListener('mousedown', (e) => e.stopPropagation());
       btn.addEventListener('touchstart', (e) => e.stopPropagation());
@@ -927,13 +928,14 @@
         btn.innerText = '키를 누르세요...';
       });
     });
+
     const audioSlider = settingsScreen.querySelector('input[type="range"]');
     audioSlider.addEventListener('mousedown', (e) => e.stopPropagation());
     audioSlider.addEventListener('touchstart', (e) => e.stopPropagation());
     audioSlider.addEventListener('click', (e) => e.stopPropagation());
     bgmVolume.addEventListener('input', (e) => {
       bgmVolumeText.innerText = `${e.target.value}%`;
-      updateVolume(); // 볼륨 조절 반영
+      updateVolume();
     });
 
     function initDunes() {
@@ -993,12 +995,12 @@
         }
       }
     }
-    // 오디오 시스템 적용 부분
+
     function playerJump() {
       if (player.isGrounded && !player.isCrouching) {
         player.vy = player.jumpPower;
         player.isGrounded = false;
-        playSound('jump'); // 점프 사운드
+        playSound('jump');
       }
     }
 
@@ -1012,9 +1014,10 @@
           speed: 14
         });
         player.shootCooldown = 15;
-        playSound('shoot'); // 공격 사운드
+        playSound('shoot');
       }
     }
+
     gameContainer.addEventListener('mousedown', (e) => {
       if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'select') return;
       if (!howToPlayScreen.classList.contains('hidden') || !settingsScreen.classList.contains('hidden') || !globalNoticeScreen.classList.contains('hidden')) return;
@@ -1026,6 +1029,7 @@
         else playerJump();
       }
     });
+
     let touchStartX = 0;
     let touchStartY = 0;
     let lastTouchX = 0;
@@ -1034,6 +1038,7 @@
     let isTouching = false;
     let swipeUpDist = 0;
     let swipeDownDist = 0;
+
     gameContainer.addEventListener('touchstart', (e) => {
       if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'select') return;
       if (gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') e.preventDefault();
@@ -1049,6 +1054,7 @@
     }, {
       passive: false
     });
+
     gameContainer.addEventListener('touchmove', (e) => {
       if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'select') return;
       if (gameState !== 'PLAYING' && gameState !== 'BOSS_BATTLE') return;
@@ -1092,6 +1098,7 @@
     }, {
       passive: false
     });
+
     gameContainer.addEventListener('touchend', (e) => {
       if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'select') return;
       if (e.touches.length === 0) {
@@ -1124,6 +1131,7 @@
     }, {
       passive: false
     });
+
     document.addEventListener('keydown', (e) => {
       if (rebindingAction) {
         e.preventDefault();
@@ -1194,6 +1202,7 @@
         }
       }
     });
+
     document.addEventListener('keyup', (e) => {
       if (e.code === keyBindings.crouch || e.code === 'ArrowDown') {
         e.preventDefault();
@@ -1241,6 +1250,7 @@
       ctx.fill();
     }
 
+    // 1. Math.round 제거 반영
     function updateAndDrawDunes(timeScale = 1) {
       ctx.fillStyle = '#220b29';
       ctx.beginPath();
@@ -1248,10 +1258,11 @@
       dunes.forEach(d => {
         if (gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') d.x -= (currentGameSpeed * 0.4) * timeScale;
         if (d.x <= -d.width) d.x += d.width * 2;
-        const rdx = Math.round(d.x);
-        const rdy = Math.round(d.y);
-        ctx.lineTo(rdx, rdy - Math.sin(d.offset) * 20);
-        ctx.bezierCurveTo(rdx + d.width * 0.3, rdy - 60, rdx + d.width * 0.7, rdy - 60, rdx + d.width, rdy);
+        
+        const dx = d.x;
+        const dy = d.y;
+        ctx.lineTo(dx, dy - Math.sin(d.offset) * 20);
+        ctx.bezierCurveTo(dx + d.width * 0.3, dy - 60, dx + d.width * 0.7, dy - 60, dx + d.width, dy);
       });
       ctx.lineTo(canvas.width + 300, canvas.height);
       ctx.lineTo(0, canvas.height);
@@ -1260,6 +1271,7 @@
       ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
     }
 
+    // 2. Math.round 제거 반영
     function updateAndDrawPlayer(timeScale = 1) {
       if (gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') {
         if (isTouching) {
@@ -1316,79 +1328,87 @@
           });
         }
       }
+      
       if (player.trail.length > 0) {
         ctx.beginPath();
-        ctx.moveTo(Math.round(player.trail[0].x), Math.round(player.trail[0].y));
+        ctx.moveTo(player.trail[0].x, player.trail[0].y);
         for (let i = 1; i < player.trail.length; i++) {
-          ctx.lineTo(Math.round(player.trail[i].x - (player.trail.length - i) * 2), Math.round(player.trail[i].y + Math.sin(animationFrameCount * 0.2 + i) * 3));
+          ctx.lineTo(player.trail[i].x - (player.trail.length - i) * 2, player.trail[i].y + Math.sin(animationFrameCount * 0.2 + i) * 3);
         }
         ctx.strokeStyle = '#e74c3c';
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
         ctx.stroke();
       }
+      
       ctx.shadowBlur = 0;
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(Math.round(player.x), Math.round(player.y + 5), player.width, player.height - 5);
+      
+      ctx.fillRect(player.x, player.y + 5, player.width, player.height - 5);
       ctx.beginPath();
-      ctx.arc(Math.round(player.x + player.width / 2), Math.round(player.y + 2), 6, 0, Math.PI * 2);
+      ctx.arc(player.x + player.width / 2, player.y + 2, 6, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#d46c63';
-      ctx.fillRect(Math.round(player.x - 5), Math.round(player.y + player.height - 3), player.width + 10, 4);
+      ctx.fillRect(player.x - 5, player.y + player.height - 3, player.width + 10, 4);
+      
       for (let i = player.projectiles.length - 1; i >= 0; i--) {
         let p = player.projectiles[i];
         p.x += p.speed * timeScale;
-        const rpx = Math.round(p.x);
-        const rpy = Math.round(p.y);
+        
         ctx.fillStyle = '#ffe600';
         ctx.shadowColor = '#ffe600';
         ctx.shadowBlur = 10;
-        ctx.fillRect(rpx, rpy, p.width, p.height);
+        
+        ctx.fillRect(p.x, p.y, p.width, p.height);
         ctx.fillStyle = '#ffffff';
         ctx.shadowBlur = 0;
-        ctx.fillRect(rpx + 4, rpy + 2, p.width - 8, p.height - 4);
+        ctx.fillRect(p.x + 4, p.y + 2, p.width - 8, p.height - 4);
         if (p.x > canvas.width) player.projectiles.splice(i, 1);
       }
     }
 
+    // 3. Math.round 제거 반영
     function updateAndDrawObstacles(timeScale, speed) {
       for (let i = 0; i < obstacles.length; i++) {
         let obs = obstacles[i];
         if (gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') obs.x -= speed * timeScale;
-        const rx = Math.round(obs.x);
-        const ry = Math.round(obs.y);
+        
+        const x = obs.x;
+        const y = obs.y;
+        
         ctx.shadowBlur = 15;
         if (obs.type === 'ground') {
           ctx.fillStyle = '#ffe600';
           ctx.shadowColor = '#ffe600';
           ctx.beginPath();
-          ctx.moveTo(rx, ry + obs.height);
-          ctx.lineTo(rx + obs.width / 2, ry);
-          ctx.lineTo(rx + obs.width, ry + obs.height);
+          ctx.moveTo(x, y + obs.height);
+          ctx.lineTo(x + obs.width / 2, y);
+          ctx.lineTo(x + obs.width, y + obs.height);
           ctx.fill();
         } else if (obs.type === 'platform') {
           ctx.fillStyle = '#00ff00';
           ctx.shadowColor = '#00ff00';
-          ctx.fillRect(rx, ry, obs.width, obs.height);
+          ctx.fillRect(x, y, obs.width, obs.height);
           ctx.shadowBlur = 0;
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(rx + 4, ry + 4, obs.width - 8, obs.height - 8);
+          ctx.fillRect(x + 4, y + 4, obs.width - 8, obs.height - 8);
         } else if (obs.type === 'high_air') {
           ctx.fillStyle = '#ff00ff';
           ctx.shadowColor = '#ff00ff';
-          ctx.fillRect(rx, ry, obs.width, obs.height);
+          ctx.fillRect(x, y, obs.width, obs.height);
           ctx.shadowBlur = 0;
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(rx + 6, ry + 4, obs.width - 12, obs.height - 8);
+          ctx.fillRect(x + 6, y + 4, obs.width - 12, obs.height - 8);
         } else {
           ctx.fillStyle = '#00f3ff';
           ctx.shadowColor = '#00f3ff';
-          ctx.fillRect(rx, ry, obs.width, obs.height);
+          ctx.fillRect(x, y, obs.width, obs.height);
           ctx.shadowBlur = 0;
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(rx + 8, ry + 6, obs.width - 16, obs.height - 12);
+          ctx.fillRect(x + 8, y + 6, obs.width - 16, obs.height - 12);
         }
         ctx.shadowBlur = 0;
+        
         if ((gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') && checkCollision(player, obs)) endGame();
         if (obs.x + obs.width < 0) {
           obstacles.splice(i, 1);
@@ -1397,6 +1417,7 @@
       }
     }
 
+    // 4. Math.round 제거 반영
     function updateAndDrawBoss(timeScale) {
       if (!boss.active) return;
       if (boss.x > canvas.width - 180 && !boss.leaving) boss.x -= 3 * timeScale;
@@ -1404,6 +1425,7 @@
       else {
         boss.y = (canvas.height / 2 - 50) + Math.sin(animationFrameCount * 0.05) * 60;
       }
+      
       if (boss.hp > 0 && !boss.leaving && boss.x <= canvas.width - 180) {
         boss.shootTimer += timeScale;
         let currentShootInterval = 55 - (bossLevel * 1);
@@ -1412,7 +1434,6 @@
           boss.shootTimer = 0;
           let spawnCount = (score >= 3000) ? 2 : 1;
           const r = Math.random();
-          // [수정] 중간 공격 높이를 groundY - 55에서 groundY - 40으로 변경 (서 있으면 피격, 웅크려야 회피 가능)
           let targetY = (r < 0.33) ? groundY - 20 : (r < 0.66) ? groundY - 40 : groundY - 110;
           boss.projectiles.push({
             x: boss.x,
@@ -1422,7 +1443,6 @@
             speed: currentGameSpeed * 0.4 + (bossLevel * 0.4)
           });
           if (spawnCount === 2) {
-            // [수정] 2쌍 공격 시에도 중간 공격 높이를 groundY - 40으로 연동 수정
             let targetY2 = (Math.random() < 0.5) ? groundY - 40 : groundY - 20;
             boss.projectiles.push({
               x: boss.x + 60,
@@ -1443,18 +1463,21 @@
         scoreValueUI.innerText = score;
         return;
       }
+      
       if (!boss.leaving) {
         for (let i = player.projectiles.length - 1; i >= 0; i--) {
           if (checkProjectileCollision(player.projectiles[i], boss)) {
             boss.hp -= player.damage;
             boss.hitTimer = 10;
             player.projectiles.splice(i, 1);
-            playSound('hit'); // 보스 격추 피격음
+            playSound('hit');
           }
         }
       }
-      const rbx = Math.round(boss.x);
-      const rby = Math.round(boss.y);
+      
+      const bx = boss.x;
+      const by = boss.y;
+      
       if (boss.hitTimer > 0) {
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#ffffff';
@@ -1463,46 +1486,52 @@
         ctx.fillStyle = '#110515';
         ctx.shadowColor = '#ff0055';
       }
+      
       ctx.shadowBlur = 20 + Math.sin(animationFrameCount * 0.1) * 10;
       ctx.beginPath();
-      ctx.moveTo(rbx + boss.width / 2, rby);
-      ctx.lineTo(rbx + boss.width, rby + boss.height / 2);
-      ctx.lineTo(rbx + boss.width / 2, rby + boss.height);
-      ctx.lineTo(rbx, rby + boss.height / 2);
+      ctx.moveTo(bx + boss.width / 2, by);
+      ctx.lineTo(bx + boss.width, by + boss.height / 2);
+      ctx.lineTo(bx + boss.width / 2, by + boss.height);
+      ctx.lineTo(bx, by + boss.height / 2);
       ctx.fill();
+      
       ctx.fillStyle = '#ff0055';
       ctx.beginPath();
-      ctx.arc(rbx + boss.width / 2, rby + boss.height / 2, 18, 0, Math.PI * 2);
+      ctx.arc(bx + boss.width / 2, by + boss.height / 2, 18, 0, Math.PI * 2);
       ctx.fill();
+      
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(rbx + boss.width / 2, rby + boss.height / 2, 6, 0, Math.PI * 2);
+      ctx.arc(bx + boss.width / 2, by + boss.height / 2, 6, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
+      
       if (boss.hp > 0 && !boss.leaving) {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 24px "Noto Serif KR"';
         ctx.textAlign = 'center';
-        ctx.fillText(`HP: ${Math.max(0, boss.hp)}`, rbx + boss.width / 2, rby - 25);
+        ctx.fillText(`HP: ${Math.max(0, boss.hp)}`, bx + boss.width / 2, by - 25);
         ctx.font = 'normal 15px "Noto Serif KR"';
         ctx.fillStyle = '#ffe600';
-        ctx.fillText(`DAMAGE: ${player.damage}`, rbx + boss.width / 2, rby - 55);
+        ctx.fillText(`DAMAGE: ${player.damage}`, bx + boss.width / 2, by - 55);
       }
+      
       for (let i = boss.projectiles.length - 1; i >= 0; i--) {
         let p = boss.projectiles[i];
         p.x -= p.speed * timeScale;
-        const rpx = Math.round(p.x);
-        const rpy = Math.round(p.y);
+        
         ctx.fillStyle = '#ff0055';
         ctx.shadowColor = '#ff0055';
         ctx.shadowBlur = 15;
-        ctx.fillRect(rpx, rpy, p.width, p.height);
+        
+        ctx.fillRect(p.x, p.y, p.width, p.height);
         ctx.fillStyle = '#ffffff';
         ctx.shadowBlur = 0;
-        ctx.fillRect(rpx + 5, rpy + 3, p.width - 10, p.height - 6);
+        ctx.fillRect(p.x + 5, p.y + 3, p.width - 10, p.height - 6);
         if (checkCollision(player, p)) endGame();
         if (p.x + p.width < 0) boss.projectiles.splice(i, 1);
       }
+      
       if (boss.leaving && boss.x > canvas.width && boss.projectiles.length === 0) {
         boss.active = false;
         gameState = 'PLAYING';
@@ -1567,7 +1596,6 @@
     function startGame() {
       if (gameState === 'GAMEOVER' && recordSection.style.display !== 'none' && recordSection.style.display !== '') return;
       if (!howToPlayScreen.classList.contains('hidden') || !settingsScreen.classList.contains('hidden') || !globalNoticeScreen.classList.contains('hidden')) return;
-      // 사용자 클릭 제스처 시 오디오 노드 활성화 및 BGM 재생
       initAudio();
       startBGM();
       gameState = 'PLAYING';
@@ -1626,7 +1654,7 @@
 
     function endGame() {
       gameState = 'GAMEOVER';
-      playSound('gameover'); // 게임오버 사운드
+      playSound('gameover');
       finalScoreText.innerText = `최종 점수 : ${score}점`;
       playerNameInput.value = '';
       recordSection.style.display = 'flex';
@@ -1678,6 +1706,7 @@
       html += '</table>';
       leaderboardDisplay.innerHTML = html;
     }
+
     recordSection.addEventListener('mousedown', (e) => e.stopPropagation());
     recordSection.addEventListener('touchstart', (e) => e.stopPropagation());
     recordSection.addEventListener('click', (e) => e.stopPropagation());
@@ -1689,6 +1718,7 @@
         saveScoreBtn.click();
       }
     });
+
     saveScoreBtn.addEventListener('click', (e) => {
       const name = playerNameInput.value.trim() || '이름없는 방랑자';
       saveScoreBtn.innerText = "저장 중...";
@@ -1721,10 +1751,12 @@
           skipSaveBtn.disabled = false;
         });
     });
+
     skipSaveBtn.addEventListener('click', (e) => {
       recordSection.style.display = 'none';
       resetToStartScreen();
     });
+
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     updateRebindButtonsUI();
     updateControlInfoUI();
@@ -1734,13 +1766,13 @@
     updateAndDrawPlayer();
     loadLeaderboard();
     checkNewNotices();
-    // 기존 리더보드 갱신 타이머
+    
     setInterval(() => {
       if (gameState === 'START' && !startScreen.classList.contains('hidden')) {
         loadLeaderboard();
       }
     }, 5000);
-    // 3. 새롭게 추가된 공지사항 알림(느낌표) 갱신 타이머 (30초 간격)
+    
     setInterval(() => {
       if (gameState === 'START' && !startScreen.classList.contains('hidden')) {
         checkNewNotices();
