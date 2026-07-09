@@ -500,6 +500,7 @@
         <p><strong>🟩 초록색 발판:</strong> 초록색으로 된 발판은 점프해서 안전하게 밟고 올라갈 수 있습니다!</p>
         <p><strong>👿 보스 전투:</strong> 1000점 단위로 보스가 등장합니다. 그 이후2000점이 지날때 마다 보스가 등장하며 보스전 중에는 설정한 <strong>[공격키]</strong>를 눌러 탄환을 발사할 수 있습니다.(보스전을 오래 끌면 불리해요.)</p>
         <p><strong>⚔️ 보상:</strong> 보스를 처치하면 보상을 얻고 다음 보스를 더 쉽게 물리칩니다!</p>
+        <p><strong>웹 업데이트:</strong> 웹 새로고침을 하면 게임을 업데이트 할수 있습니다. </p>*공지사항도 확인해주세요.*</p>
       </div>
       <button id="closeHowToPlayBtn" class="ui-button">닫기</button>
     </div>
@@ -654,7 +655,6 @@
     player.y = groundY - player.height;
     let obstacles = [];
     let dunes = [];
-
     /* --- 오디오 시스템 오실레이터 방식 구현 --- */
     let audioCtx = null;
     let bgmGain = null;
@@ -663,7 +663,7 @@
 
     function initAudio() {
       if (audioCtx) return;
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = new(window.AudioContext || window.webkitAudioContext)();
       bgmGain = audioCtx.createGain();
       sfxGain = audioCtx.createGain();
       bgmGain.connect(audioCtx.destination);
@@ -682,12 +682,10 @@
     function playSound(type) {
       if (!audioCtx) return;
       if (audioCtx.state === 'suspended') audioCtx.resume();
-
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
       gain.connect(sfxGain);
-
       if (type === 'jump') {
         osc.type = 'square';
         osc.frequency.setValueAtTime(150, audioCtx.currentTime);
@@ -726,38 +724,32 @@
     function startBGM() {
       if (!audioCtx) return;
       if (bgmInterval) clearInterval(bgmInterval);
-
       // 신비롭고 웅장한 아라비안/마이너 풍의 절제된 베이스 루프
-      const normalNotes = [147, 165, 175, 196, 220, 196, 175, 165]; 
+      const normalNotes = [147, 165, 175, 196, 220, 196, 175, 165];
       const bossNotes = [110, 117, 110, 117, 131, 123, 110, 98];
       let step = 0;
-
       bgmInterval = setInterval(() => {
         if (gameState !== 'PLAYING' && gameState !== 'BOSS_BATTLE') {
           clearInterval(bgmInterval);
           return;
         }
-
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(bgmGain);
-
         const isBoss = (gameState === 'BOSS_BATTLE');
         osc.type = isBoss ? 'sawtooth' : 'triangle';
         const currentNotes = isBoss ? bossNotes : normalNotes;
-        
         osc.frequency.setValueAtTime(currentNotes[step % currentNotes.length], audioCtx.currentTime);
         gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.38);
-
         osc.start();
         osc.stop(audioCtx.currentTime + 0.38);
         step++;
       }, 400);
     }
     /* ----------------------------------------------- */
-
+    // 1. openGlobalNotice 함수 수정 (JSON.stringify 제거)
     async function openGlobalNotice(e) {
       if (e) e.stopPropagation();
       const listContainer = document.getElementById('globalNoticeList');
@@ -773,7 +765,7 @@
         const data = await response.json();
         listContainer.innerHTML = '';
         if (Array.isArray(data) && data.length > 0) {
-          localStorage.setItem('lastViewedNotice', JSON.stringify(data[0]));
+          localStorage.setItem('lastViewedNotice', data[0]); // 수정된 부분
           badge.style.display = 'none';
           data.forEach(text => {
             const li = document.createElement('li');
@@ -788,6 +780,7 @@
         listContainer.innerHTML = '<li style="color:#ff0055;">소식을 불러오지 못했습니다. 앱스 스크립트 웹앱 주소 및 배포 상태를 확인해주세요.</li>';
       }
     }
+    // 2. checkNewNotices 함수 수정 (순수 문자열 비교)
     async function checkNewNotices() {
       const badge = document.getElementById('noticeBadge');
       try {
@@ -795,7 +788,7 @@
         const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
           const lastSeen = localStorage.getItem('lastViewedNotice');
-          if (lastSeen !== JSON.stringify(data[0])) {
+          if (lastSeen !== data[0]) { // 수정된 부분
             badge.style.display = 'flex';
           } else {
             badge.style.display = 'none';
@@ -1000,7 +993,6 @@
         }
       }
     }
-
     // 오디오 시스템 적용 부분
     function playerJump() {
       if (player.isGrounded && !player.isCrouching) {
@@ -1420,7 +1412,8 @@
           boss.shootTimer = 0;
           let spawnCount = (score >= 3000) ? 2 : 1;
           const r = Math.random();
-          let targetY = (r < 0.33) ? groundY - 20 : (r < 0.66) ? groundY - 55 : groundY - 110;
+          // [수정] 중간 공격 높이를 groundY - 55에서 groundY - 40으로 변경 (서 있으면 피격, 웅크려야 회피 가능)
+          let targetY = (r < 0.33) ? groundY - 20 : (r < 0.66) ? groundY - 40 : groundY - 110;
           boss.projectiles.push({
             x: boss.x,
             y: targetY,
@@ -1429,7 +1422,8 @@
             speed: currentGameSpeed * 0.4 + (bossLevel * 0.4)
           });
           if (spawnCount === 2) {
-            let targetY2 = (Math.random() < 0.5) ? groundY - 55 : groundY - 20;
+            // [수정] 2쌍 공격 시에도 중간 공격 높이를 groundY - 40으로 연동 수정
+            let targetY2 = (Math.random() < 0.5) ? groundY - 40 : groundY - 20;
             boss.projectiles.push({
               x: boss.x + 60,
               y: targetY2,
@@ -1519,7 +1513,7 @@
     }
 
     function addScore() {
-      score += 1;
+      score += 100;
       scoreValueUI.innerText = score;
       let progressPercent = Math.min((score / 10000) * 100, 100);
       progressBar.style.width = `${progressPercent}%`;
@@ -1573,11 +1567,9 @@
     function startGame() {
       if (gameState === 'GAMEOVER' && recordSection.style.display !== 'none' && recordSection.style.display !== '') return;
       if (!howToPlayScreen.classList.contains('hidden') || !settingsScreen.classList.contains('hidden') || !globalNoticeScreen.classList.contains('hidden')) return;
-      
       // 사용자 클릭 제스처 시 오디오 노드 활성화 및 BGM 재생
       initAudio();
       startBGM();
-
       gameState = 'PLAYING';
       score = 0;
       baseGameSpeed = 4.3;
@@ -1742,11 +1734,18 @@
     updateAndDrawPlayer();
     loadLeaderboard();
     checkNewNotices();
+    // 기존 리더보드 갱신 타이머
     setInterval(() => {
       if (gameState === 'START' && !startScreen.classList.contains('hidden')) {
         loadLeaderboard();
       }
     }, 5000);
+    // 3. 새롭게 추가된 공지사항 알림(느낌표) 갱신 타이머 (30초 간격)
+    setInterval(() => {
+      if (gameState === 'START' && !startScreen.classList.contains('hidden')) {
+        checkNewNotices();
+      }
+    }, 30000);
   </script>
 </body>
 
