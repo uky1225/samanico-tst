@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Journey of the Sands (Desert Odyssey)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght=300;400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;700&display=swap" rel="stylesheet">
   <style>
     /* 브라우저 기본 제스처 완벽 차단 CSS */
     html,
@@ -154,7 +154,6 @@
       transition: opacity 0.5s ease;
     }
 
-    /* 📌 공지사항 화면이 항상 최상단에 오도록 z-index 수정 */
     #globalNoticeScreen {
       z-index: 30 !important;
     }
@@ -391,7 +390,6 @@
       display: none !important;
     }
 
-    /* 정사각형 실시간 공지사항 버튼 스타일 */
     #globalNoticeBtn {
       position: absolute;
       top: 25px;
@@ -416,6 +414,25 @@
     #globalNoticeBtn:hover {
       background-color: #e65100;
       transform: scale(1.08);
+    }
+
+    #noticeBadge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ff0055;
+      color: white;
+      font-size: 10px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      pointer-events: none;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+      display: none;
     }
 
     .notice-list {
@@ -449,7 +466,7 @@
     <canvas id="gameCanvas" width="1200" height="675"></canvas>
 
     <div id="globalNoticeScreen" class="overlayScreen hidden">
-      <h1 style="font-size: 42px; margin-bottom: 25px;"> 실시간 사막 소식</h1>
+      <h1 style="font-size: 42px; margin-bottom: 25px;">실시간 사막 소식</h1>
       <div class="manual-content" style="width: 500px; max-height: 350px; overflow-y: auto;">
         <ul id="globalNoticeList" class="notice-list">
           <li>공지사항을 가져오는 중입니다...</li>
@@ -459,7 +476,7 @@
     </div>
 
     <div id="startScreen" class="overlayScreen">
-      <button id="globalNoticeBtn" onclick="openGlobalNotice(event)" title=" 공지사항">📢</button>
+      <button id="globalNoticeBtn" onclick="openGlobalNotice(event)" title="공지사항">📢<span id="noticeBadge">!</span></button>
       <h1>여정의 시작</h1>
       <div id="leaderboardDisplay" class="leaderboard-box">
         <h3>🏆 명예의 전당 🏆</h3>
@@ -547,7 +564,6 @@
   </div>
 
   <script>
-    // [중요] 여기에 앞서 만든 '새 배포' 방식의 구글 웹앱 URL을 입력하세요.
     const GOOGLE_SHEET_CSV_URL = "https://script.google.com/macros/s/AKfycbzBXe9QYuHaZTjfwMazjb-FkLjWt8c-OjkyQOr2DmS3kx2EGM7vvFy5bOl7_2CQGSkgag/exec";
     const SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyAdjdfX0DK3v4VvUtMJf1UeAABnaR3kljhrSPIJbaPDyWyw-vm_MfudPwPseU-X0WQFw/exec";
     const canvas = document.getElementById('gameCanvas');
@@ -638,10 +654,10 @@
     player.y = groundY - player.height;
     let obstacles = [];
     let dunes = [];
-    // 📢 실시간 공지사항 모달 열기 함수 (A2~A11 JSON 배열 파싱 적용)
     async function openGlobalNotice(e) {
       if (e) e.stopPropagation();
       const listContainer = document.getElementById('globalNoticeList');
+      const badge = document.getElementById('noticeBadge');
       globalNoticeScreen.classList.remove('hidden');
       listContainer.innerHTML = '<li>최신 사막 소식을 불러오는 중...</li>';
       if (!GOOGLE_SHEET_CSV_URL || GOOGLE_SHEET_CSV_URL.includes("YOUR_GOOGLE_SHEET")) {
@@ -649,12 +665,12 @@
         return;
       }
       try {
-        // GAS 코드에 지정한 getNotice 파라미터 호출
         const response = await fetch(`${GOOGLE_SHEET_CSV_URL}?action=getNotice&t=${Date.now()}`);
         const data = await response.json();
         listContainer.innerHTML = '';
-        // 배열로 잘 받아와졌고 내용이 1개 이상 있을 때
         if (Array.isArray(data) && data.length > 0) {
+          localStorage.setItem('lastViewedNotice', JSON.stringify(data[0]));
+          badge.style.display = 'none';
           data.forEach(text => {
             const li = document.createElement('li');
             li.textContent = text;
@@ -668,7 +684,24 @@
         listContainer.innerHTML = '<li style="color:#ff0055;">소식을 불러오지 못했습니다. 앱스 스크립트 웹앱 주소 및 배포 상태를 확인해주세요.</li>';
       }
     }
-    // 📢 실시간 공지사항 모달 닫기 함수
+    async function checkNewNotices() {
+      const badge = document.getElementById('noticeBadge');
+      try {
+        const response = await fetch(`${GOOGLE_SHEET_CSV_URL}?action=getNotice&t=${Date.now()}`);
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const lastSeen = localStorage.getItem('lastViewedNotice');
+          if (lastSeen !== JSON.stringify(data[0])) {
+            badge.style.display = 'flex';
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+      } catch (err) {
+        console.error("공지 확인 실패:", err);
+      }
+    }
+
     function closeGlobalNotice(e) {
       if (e) e.stopPropagation();
       globalNoticeScreen.classList.add('hidden');
@@ -817,11 +850,12 @@
     }
 
     function spawnObstacle(timeScale) {
-      let spawnRate = Math.max(25, 70 - Math.floor(score / 100) * 5);
+      // 난이도 완화: spawnRate 범위를 늘려 장애물 간격을 더 길게 만듬
+      let spawnRate = Math.max(45, 90 - Math.floor(score / 100) * 4);
       spawnTimer += timeScale;
       if (spawnTimer >= currentSpawnTarget) {
         spawnTimer = 0;
-        currentSpawnTarget = Math.random() * 20 + spawnRate;
+        currentSpawnTarget = Math.random() * 30 + spawnRate; // 랜덤 범위 추가
         let maxSpawn = (score < 1500) ? 2 : 3;
         const spawnCount = Math.floor(Math.random() * maxSpawn) + 1;
         for (let i = 0; i < spawnCount; i++) {
@@ -1097,11 +1131,6 @@
       } else {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
-      ctx.beginPath();
-      ctx.arc(canvas.width - 300, 250, 90, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 180, 100, 0.4)';
-      ctx.fill();
-      ctx.closePath();
       ctx.fillStyle = '#4a154b';
       ctx.beginPath();
       ctx.moveTo(0, groundY);
@@ -1223,10 +1252,10 @@
       }
     }
 
-    function updateAndDrawObstacles(timeScale) {
+    function updateAndDrawObstacles(timeScale, speed) {
       for (let i = 0; i < obstacles.length; i++) {
         let obs = obstacles[i];
-        if (gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') obs.x -= currentGameSpeed * timeScale;
+        if (gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') obs.x -= speed * timeScale;
         const rx = Math.round(obs.x);
         const ry = Math.round(obs.y);
         ctx.shadowBlur = 15;
@@ -1278,9 +1307,11 @@
       }
       if (boss.hp > 0 && !boss.leaving && boss.x <= canvas.width - 180) {
         boss.shootTimer += timeScale;
-        let currentShootInterval = Math.max(15, 28 - (bossLevel * 2));
+        let currentShootInterval = 55 - (bossLevel * 1);
+        if (currentShootInterval < 35) currentShootInterval = 35;
         if (boss.shootTimer > currentShootInterval) {
           boss.shootTimer = 0;
+          let spawnCount = (score >= 3000) ? 2 : 1;
           const r = Math.random();
           let targetY = (r < 0.33) ? groundY - 20 : (r < 0.66) ? groundY - 55 : groundY - 110;
           boss.projectiles.push({
@@ -1288,22 +1319,29 @@
             y: targetY,
             width: 50,
             height: 16,
-            speed: currentGameSpeed * 0.5 + (bossLevel * 0.5)
+            speed: currentGameSpeed * 0.4 + (bossLevel * 0.4)
           });
-          if (Math.random() > 0.6) {
+          if (spawnCount === 2) {
             let targetY2 = (Math.random() < 0.5) ? groundY - 55 : groundY - 20;
             boss.projectiles.push({
               x: boss.x + 60,
               y: targetY2,
               width: 50,
               height: 16,
-              speed: currentGameSpeed * 0.5 + (bossLevel * 0.5)
+              speed: currentGameSpeed * 0.3 + (bossLevel * 0.3)
             });
           }
         }
       } else if (!boss.leaving && boss.hp <= 0) {
-        boss.leaving = true;
+        // 즉시 종료 로직
+        boss.active = false;
+        boss.projectiles = []; // 탄환 제거
+        gameState = 'PLAYING';
+        bossLevel++;
+        nextBossScore += 2000;
+        bossWarningUI.classList.remove('warning-active');
         scoreValueUI.innerText = score;
+        return; // 즉시 종료하므로 이후 드로우 로직 건너뜀
       }
       if (!boss.leaving) {
         for (let i = player.projectiles.length - 1; i >= 0; i--) {
@@ -1394,15 +1432,16 @@
       animationFrameCount += timeScale;
       drawBackground();
       updateAndDrawDunes(timeScale);
+      // 속도 로직 변경 구간
+      currentGameSpeed = baseGameSpeed + (score / 250);
+      let obstacleSpeed = (score > 5000) ? (baseGameSpeed + (5000 / 250)) : currentGameSpeed;
       if (gameState === 'PLAYING') {
         spawnObstacle(timeScale);
-        currentGameSpeed = baseGameSpeed + (score / 250);
-        if (currentGameSpeed > 22) currentGameSpeed = 22;
         if (score >= nextBossScore) {
           gameState = 'BOSS_BATTLE';
           boss.active = true;
           boss.leaving = false;
-          boss.maxHp = 25 + (bossLevel * 15);
+          boss.maxHp = 5 + (bossLevel * 3);
           boss.hp = boss.maxHp;
           boss.x = canvas.width + 100;
           boss.projectiles = [];
@@ -1421,7 +1460,7 @@
           scoreTimer = 0;
         }
       }
-      updateAndDrawObstacles(timeScale);
+      updateAndDrawObstacles(timeScale, obstacleSpeed);
       updateAndDrawPlayer(timeScale);
     }
 
@@ -1430,8 +1469,8 @@
       if (!howToPlayScreen.classList.contains('hidden') || !settingsScreen.classList.contains('hidden') || !globalNoticeScreen.classList.contains('hidden')) return;
       gameState = 'PLAYING';
       score = 0;
-      baseGameSpeed = 6.5;
-      currentGameSpeed = 6.5;
+      baseGameSpeed = 4.3;
+      currentGameSpeed = 4.3;
       obstacles = [];
       nextBossScore = 1000;
       bossLevel = 1;
@@ -1479,6 +1518,7 @@
       updateAndDrawPlayer();
       updateControlInfoUI();
       loadLeaderboard();
+      checkNewNotices();
     }
 
     function endGame() {
@@ -1589,11 +1629,12 @@
     updateAndDrawDunes();
     updateAndDrawPlayer();
     loadLeaderboard();
+    checkNewNotices();
     setInterval(() => {
       if (gameState === 'START' && !startScreen.classList.contains('hidden')) {
         loadLeaderboard();
       }
-    }, 10000);
+    }, 5000);
   </script>
 </body>
 
