@@ -1,40 +1,13 @@
-const CACHE_NAME = 'desert-odyssey-v2'; // 👈 버전을 v2로 올려서 브라우저가 새 페이지를 감지하도록 합니다.
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './notice/',           // 👈 공지사항 폴더 경로 추가
-  './notice/index.html',  // 👈 공지사항 파일 경로 추가
-  './ranking/',          // 👈 랭킹 폴더 경로 추가
-  './ranking/index.html'  // 👈 랭킹 파일 경로 추가
-];
+const CACHE_NAME = 'desert-odyssey-v100'; // 버전 올리면 업데이트 강제 실행됨
+const ASSETS = ['./', './index.html', './manifest.json'];
 
-// 1. 서비스워커 설치 시 지정된 리소스 캐싱 저장
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
-  );
-});
+self.addEventListener('install', (e) => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
 
-// 2. 네트워크 요청 가로채기 (네트워크 가로채기 분기처리)
 self.addEventListener('fetch', (e) => {
-  // ★ 글로벌 랭킹 통신(kvdb)이나 깃허브 공지 데이터는 캐시를 거치지 않고 실시간 네트워크 강제 조회
-  if (e.request.url.includes('githubusercontent.com') || e.request.url.includes('kvdb.io')) {
-    e.respondWith(
-      fetch(e.request).catch(() => {
-        // 완전 오프라인일 때 전송이 막히면 로컬 브라우저 캐시에서 매칭을 시도
-        return caches.match(e.request);
-      })
-    );
+  // 1. 데이터 통신(kvdb, 구글시트)은 절대 캐시 안 함 (실시간 데이터 저장 보장)
+  if (e.request.url.includes('kvdb.io') || e.request.url.includes('script.google.com')) {
     return;
   }
-
-  // 그 외 일반 정적 에셋(HTML UI 구조)은 오프라인 가속을 위해 로컬 캐시 우선 활용
-  e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
-    })
-  );
+  // 2. 나머지는 캐시에서 가져오되, 업데이트가 있으면 즉시 반영
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
 });
