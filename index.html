@@ -685,8 +685,8 @@
     function updateVolume() {
       if (!audioCtx) return;
       const vol = bgmVolume.value / 100;
-      bgmGain.gain.setValueAtTime(vol * 0.15, audioCtx.currentTime);
-      sfxGain.gain.setValueAtTime(vol * 0.4, audioCtx.currentTime);
+      bgmGain.gain.setValueAtTime(vol * 2, audioCtx.currentTime);
+      sfxGain.gain.setValueAtTime(vol * 1, audioCtx.currentTime);
     }
 
     function playSound(type) {
