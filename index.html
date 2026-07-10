@@ -371,10 +371,12 @@
     }
 
     @keyframes blink {
+
       0%,
       100% {
         opacity: 1;
       }
+
       50% {
         opacity: 0.3;
       }
@@ -501,7 +503,8 @@
 
     <div id="settingsScreen" class="overlayScreen hidden">
       <h1 style="font-size: 42px; margin-bottom: 25px;">⚙️ 설정 창</h1>
-      <div class="manual-content" style="width: 490px;">
+
+      <div class="manual-content" style="width: 490px; max-height: 60vh; overflow-y: auto;">
 
         <div class="setting-group">
           <h3> 조작 설정 (원하는 키를 자유롭게 설정하세요)</h3>
@@ -528,9 +531,9 @@
         </div>
 
         <div class="setting-group" style="margin-bottom: 0;">
-          <h3> 🎵 오디오 설정</h3>
+          <h3> 오디오 설정</h3>
           <div class="setting-item">
-            <label style="color: #ff0055;">전체 음량 (Master)</label>
+            <label style="color: #edb45e;">전체 음량 </label>
             <div style="display: flex; align-items: center; gap: 8px;">
               <input type="range" id="masterVolume" min="0" max="100" value="50">
               <span id="masterVolumeText" style="font-size: 14px; width: 35px; text-align: right;">50%</span>
@@ -539,35 +542,35 @@
           <div class="setting-item">
             <label>기본 BGM</label>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <input type="range" id="normalBgmVolume" min="0" max="100" value="100">
-              <span id="normalBgmVolumeText" style="font-size: 14px; width: 35px; text-align: right;">100%</span>
+              <input type="range" id="normalBgmVolume" min="0" max="100" value="50">
+              <span id="normalBgmVolumeText" style="font-size: 14px; width: 35px; text-align: right;">50%</span>
             </div>
           </div>
           <div class="setting-item">
             <label>보스 BGM</label>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <input type="range" id="bossBgmVolume" min="0" max="100" value="100">
-              <span id="bossBgmVolumeText" style="font-size: 14px; width: 35px; text-align: right;">100%</span>
+              <input type="range" id="bossBgmVolume" min="0" max="100" value="50">
+              <span id="bossBgmVolumeText" style="font-size: 14px; width: 35px; text-align: right;">50%</span>
             </div>
           </div>
           <div class="setting-item">
             <label>점프 효과음</label>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <input type="range" id="jumpVolume" min="0" max="100" value="100">
-              <span id="jumpVolumeText" style="font-size: 14px; width: 35px; text-align: right;">100%</span>
+              <input type="range" id="jumpVolume" min="0" max="100" value="50">
+              <span id="jumpVolumeText" style="font-size: 14px; width: 35px; text-align: right;">50%</span>
             </div>
           </div>
           <div class="setting-item">
             <label>게임오버 효과음</label>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <input type="range" id="deathVolume" min="0" max="100" value="100">
-              <span id="deathVolumeText" style="font-size: 14px; width: 35px; text-align: right;">100%</span>
+              <input type="range" id="deathVolume" min="0" max="100" value="50">
+              <span id="deathVolumeText" style="font-size: 14px; width: 35px; text-align: right;">50%</span>
             </div>
           </div>
         </div>
 
       </div>
-      <div style="display: flex; gap: 15px;">
+      <div style="display: flex; gap: 15px; margin-top: 20px;">
         <button id="resetSettingsBtn" class="ui-button secondary">🔄 기본키로 초기화</button>
         <button id="closeSettingsBtn" class="ui-button">저장 및 닫기</button>
       </div>
@@ -689,19 +692,17 @@
     player.y = groundY - player.height;
     let obstacles = [];
     let dunes = [];
-
     /* --- 개선된 오디오 시스템 (마스터/개별 볼륨 및 부드러운 점프음) --- */
     let audioCtx = null;
-    let stopBgmTimer = null; 
-
+    let stopBgmTimer = null;
     // 볼륨 관리 객체 (0.0 ~ 1.0 비율)
     const audioVolumes = {
       master: 0.5,
-      normalBgm: 1.0,
-      bossBgm: 1.0,
-      jump: 1.0,
-      death: 1.0,
-      sfx: 1.0 // 공격, 피격 등 기타 효과음
+      normalBgm: 0.5,
+      bossBgm: 0.5,
+      jump: 0.5,
+      death: 0.5,
+      sfx: 0.5, // 공격, 피격 등 기타 효과음
     };
 
     function initAudio() {
@@ -712,17 +713,14 @@
     function playSound(type) {
       if (!audioCtx) return;
       if (audioCtx.state === 'suspended') audioCtx.resume();
-      
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
       gain.connect(audioCtx.destination); // 볼륨을 개별로 계산하므로 destination에 직결
-
       const time = audioCtx.currentTime;
-
       if (type === 'jump') {
         // 점프 소리를 짧고 부드럽게(sine) 변경하여 배경음악과 조화롭게 만듦
-        let effVol = audioVolumes.master * audioVolumes.jump * 0.15; 
+        let effVol = audioVolumes.master * audioVolumes.jump * 0.15;
         osc.type = 'sine';
         osc.frequency.setValueAtTime(300, time);
         osc.frequency.exponentialRampToValueAtTime(600, time + 0.08);
@@ -762,41 +760,33 @@
 
     function startBGM() {
       if (!audioCtx) return;
-      if (stopBgmTimer) stopBgmTimer(); 
-      
+      if (stopBgmTimer) stopBgmTimer();
       const normalNotes = [147, 165, 175, 196, 220, 196, 175, 165];
       const bossNotes = [110, 117, 110, 117, 131, 123, 110, 98];
       let step = 0;
-      
       stopBgmTimer = accurateTimer(() => {
         if (gameState !== 'PLAYING' && gameState !== 'BOSS_BATTLE') {
           if (stopBgmTimer) stopBgmTimer();
           return;
         }
-        
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        
         const isBoss = (gameState === 'BOSS_BATTLE');
         osc.type = isBoss ? 'sawtooth' : 'triangle';
         const currentNotes = isBoss ? bossNotes : normalNotes;
-        
         // 마스터 볼륨과 개별 볼륨의 곱으로 최종 볼륨 계산 (비율 유지)
         let specificVol = isBoss ? audioVolumes.bossBgm : audioVolumes.normalBgm;
-        let effVol = audioVolumes.master * specificVol * 0.25; 
-
+        let effVol = audioVolumes.master * specificVol * 0.25;
         osc.frequency.setValueAtTime(currentNotes[step % currentNotes.length], audioCtx.currentTime);
         gain.gain.setValueAtTime(effVol, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.38);
-        
         osc.start();
         osc.stop(audioCtx.currentTime + 0.38);
         step++;
       }, 400);
     }
-
     async function openGlobalNotice(e) {
       if (e) e.stopPropagation();
       const listContainer = document.getElementById('globalNoticeList');
@@ -827,7 +817,6 @@
         listContainer.innerHTML = '<li style="color:#ff0055;">소식을 불러오지 못했습니다. 앱스 스크립트 웹앱 주소 및 배포 상태를 확인해주세요.</li>';
       }
     }
-
     async function checkNewNotices() {
       const badge = document.getElementById('noticeBadge');
       try {
@@ -916,7 +905,6 @@
         }
       });
     }
-
     howToPlayBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     howToPlayBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     howToPlayBtn.addEventListener('click', (e) => {
@@ -924,7 +912,6 @@
       startScreen.classList.add('hidden');
       howToPlayScreen.classList.remove('hidden');
     });
-
     closeHowToPlayBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     closeHowToPlayBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     closeHowToPlayBtn.addEventListener('click', (e) => {
@@ -932,7 +919,6 @@
       howToPlayScreen.classList.add('hidden');
       startScreen.classList.remove('hidden');
     });
-
     settingsBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     settingsBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     settingsBtn.addEventListener('click', (e) => {
@@ -941,7 +927,6 @@
       startScreen.classList.add('hidden');
       settingsScreen.classList.remove('hidden');
     });
-
     closeSettingsBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     closeSettingsBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     closeSettingsBtn.addEventListener('click', (e) => {
@@ -952,7 +937,6 @@
       settingsScreen.classList.add('hidden');
       startScreen.classList.remove('hidden');
     });
-
     resetSettingsBtn.addEventListener('mousedown', (e) => e.stopPropagation());
     resetSettingsBtn.addEventListener('touchstart', (e) => e.stopPropagation());
     resetSettingsBtn.addEventListener('click', (e) => {
@@ -965,7 +949,6 @@
       updateRebindButtonsUI();
       updateControlInfoUI();
     });
-
     document.querySelectorAll('.rebind-btn').forEach(btn => {
       btn.addEventListener('mousedown', (e) => e.stopPropagation());
       btn.addEventListener('touchstart', (e) => e.stopPropagation());
@@ -980,19 +963,17 @@
         btn.innerText = '키를 누르세요...';
       });
     });
-
     // 오디오 슬라이더 조작 시 점프/게임상호작용 방지
     settingsScreen.querySelectorAll('input[type="range"]').forEach(slider => {
       slider.addEventListener('mousedown', (e) => e.stopPropagation());
       slider.addEventListener('touchstart', (e) => e.stopPropagation());
       slider.addEventListener('click', (e) => e.stopPropagation());
     });
-
     // 각 슬라이더 이벤트 매핑 함수
     function setupVolumeSlider(id, key) {
       const slider = document.getElementById(id);
       const text = document.getElementById(id + 'Text');
-      if(slider && text) {
+      if (slider && text) {
         slider.addEventListener('input', (e) => {
           const val = e.target.value;
           text.innerText = `${val}%`;
@@ -1000,7 +981,6 @@
         });
       }
     }
-
     // 볼륨 슬라이더 세팅 적용
     setupVolumeSlider('masterVolume', 'master');
     setupVolumeSlider('normalBgmVolume', 'normalBgm');
@@ -1087,7 +1067,6 @@
         playSound('shoot');
       }
     }
-
     gameContainer.addEventListener('mousedown', (e) => {
       if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'select') return;
       if (!howToPlayScreen.classList.contains('hidden') || !settingsScreen.classList.contains('hidden') || !globalNoticeScreen.classList.contains('hidden')) return;
@@ -1099,7 +1078,6 @@
         else playerJump();
       }
     });
-
     let touchStartX = 0;
     let touchStartY = 0;
     let lastTouchX = 0;
@@ -1108,7 +1086,6 @@
     let isTouching = false;
     let swipeUpDist = 0;
     let swipeDownDist = 0;
-
     gameContainer.addEventListener('touchstart', (e) => {
       if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'select') return;
       if (gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') e.preventDefault();
@@ -1124,7 +1101,6 @@
     }, {
       passive: false
     });
-
     gameContainer.addEventListener('touchmove', (e) => {
       if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'select') return;
       if (gameState !== 'PLAYING' && gameState !== 'BOSS_BATTLE') return;
@@ -1168,7 +1144,6 @@
     }, {
       passive: false
     });
-
     gameContainer.addEventListener('touchend', (e) => {
       if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'select') return;
       if (e.touches.length === 0) {
@@ -1201,7 +1176,6 @@
     }, {
       passive: false
     });
-
     document.addEventListener('keydown', (e) => {
       if (rebindingAction) {
         e.preventDefault();
@@ -1272,7 +1246,6 @@
         }
       }
     });
-
     document.addEventListener('keyup', (e) => {
       if (e.code === keyBindings.crouch || e.code === 'ArrowDown') {
         e.preventDefault();
@@ -1760,11 +1733,9 @@
       html += '</table>';
       leaderboardDisplay.innerHTML = html;
     }
-
     recordSection.addEventListener('mousedown', (e) => e.stopPropagation());
     recordSection.addEventListener('touchstart', (e) => e.stopPropagation());
     recordSection.addEventListener('click', (e) => e.stopPropagation());
-
     playerNameInput.addEventListener('keydown', (e) => {
       e.stopPropagation();
       if (e.isComposing) return;
@@ -1773,7 +1744,6 @@
         saveScoreBtn.click();
       }
     });
-
     saveScoreBtn.addEventListener('click', (e) => {
       const name = playerNameInput.value.trim() || '이름없는 방랑자';
       saveScoreBtn.innerText = "저장 중...";
@@ -1806,14 +1776,11 @@
           skipSaveBtn.disabled = false;
         });
     });
-
     skipSaveBtn.addEventListener('click', (e) => {
       recordSection.style.display = 'none';
       resetToStartScreen();
     });
-
     document.addEventListener('contextmenu', (e) => e.preventDefault());
-
     updateRebindButtonsUI();
     updateControlInfoUI();
     initDunes();
@@ -1822,13 +1789,11 @@
     updateAndDrawPlayer();
     loadLeaderboard();
     checkNewNotices();
-
     accurateTimer(() => {
       if (gameState === 'START' && !startScreen.classList.contains('hidden')) {
         loadLeaderboard();
       }
     }, 5000);
-
     accurateTimer(() => {
       if (gameState === 'START' && !startScreen.classList.contains('hidden')) {
         checkNewNotices();
