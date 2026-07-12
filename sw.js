@@ -1,4 +1,4 @@
-const CACHE_NAME = 'desert-odyssey-v1'; // 나중에 버전 업데이트 시 v2로 변경하세요
+const CACHE_NAME = 'Samanico'; // 나중에 버전 업데이트 시 v2로 변경하세요
 const ASSETS = [
   './',
   './index.html'
