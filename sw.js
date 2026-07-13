@@ -2,8 +2,8 @@
 const ASSETS = [
   './',
   './index.html',
-  './icon-192.png',
-  './icon-512.png'
+  './icon.png',
+  //'./icon-512.png'
   // 필요 시 ./style.css, ./game.js 등 추가
 ];
 
