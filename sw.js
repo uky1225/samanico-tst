@@ -1,9 +1,9 @@
-  const CACHE_NAME = 'Samanico_v2'; // 버전 변경으로 기존 캐시 완벽 초기화
+const CACHE_NAME = 'Samanico_v3'; // 버전 업그레이드로 이전 캐시 강제 초기화
 const ASSETS = [
   './',
   './index.html',
-  './icon2.png',
-  './icon2.png'
+  './manifest.json', // 매니페스트 파일도 캐시에 추가하는 것이 안정적입니다.
+  './icon2.png'      // 중복되었던 항목 하나 삭제 완료
   // 필요 시 ./style.css, ./game.js 등 추가
 ];
 
