@@ -3,7 +3,7 @@ const ASSETS = [
   './',
   './index.html',
   './manifest.json', // 매니페스트 파일도 캐시에 추가하는 것이 안정적입니다.
-  './icon2.png'      // 중복되었던 항목 하나 삭제 완료
+  './IMG_0012.png'      // 중복되었던 항목 하나 삭제 완료
   // 필요 시 ./style.css, ./game.js 등 추가
 ];
 
