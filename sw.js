@@ -1,4 +1,4 @@
-const CACHE_NAME = 'Samanico_v3'; // 버전 업그레이드로 이전 캐시 강제 초기화
+const CACHE_NAME = 'Samanico'; // 버전 업그레이드로 이전 캐시 강제 초기화
 const ASSETS = [
   './',
   './index.html',
