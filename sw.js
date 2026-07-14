@@ -1,5 +1,5 @@
 // 버전 이름을 변경해야 브라우저가 '업데이트'로 인식합니다.
-const CACHE_NAME = 'Samanico-v2'; 
+const CACHE_NAME = 'Samanico1'; 
 
 const ASSETS = [
   './',
