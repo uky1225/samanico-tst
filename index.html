@@ -22,7 +22,6 @@
     // 🌟 [최적화] 서비스 워커 등록 및 실시간 업데이트 연동 객체 선언
     let swRegistration = null;
     let lastModified = null;
-
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js')
         .then((reg) => {
@@ -31,37 +30,29 @@
         })
         .catch(err => console.error("서비스 워커 등록 실패:", err));
     }
-
     // 🌟 [최적화] 실시간 코드 변경 감지 및 동기식 캐시 업데이트 스크립트
     setInterval(async () => {
       try {
-        // 서비스 워커와 브라우저 캐시를 우회하기 위해 URL 뒤에 랜덤한 시간 값을 붙여 요청을 보냅니다.
         const cacheBusterUrl = window.location.href.split('?')[0].split('#')[0] + '?update_check=' + Date.now();
         const response = await fetch(cacheBusterUrl, {
           method: 'HEAD',
           cache: 'no-cache' // 브라우저 캐싱 강제 무시
         });
         const currentModified = response.headers.get('Last-Modified');
-
-        // 이전에 받아온 수정 시간과 방금 받아온 수정 시간이 다르면 업데이트를 처리합니다.
         if (lastModified && lastModified !== currentModified) {
           console.log("새로운 코드 업데이트가 감지되었습니다!");
-
           if (swRegistration) {
             console.log("서비스 워커 최신 자원 다운로드 강제 유도 중...");
-            // 🌟 서비스 워커의 update()를 강제 호출하여 sw.js가 즉시 새 캐시를 구성하게 만듭니다.
             await swRegistration.update();
           }
-          
           console.log("새로고침을 실행하여 변경된 화면을 적용합니다.");
           window.location.reload();
         }
         lastModified = currentModified;
       } catch (error) {
-        // 네트워크 연결이 잠시 끊겼거나 로컬 서버가 다운되었을 때 발생하는 에러는 콘솔 경고로만 남깁니다.
         console.warn("코드 업데이트 감지 중 오류 발생 (오프라인 상태일 수 있음):", error);
       }
-    }, 2000); // 2초마다 감지 실행
+    }, 10000); // 10초마다 감지 실행
   </script>
 
   <script type="module">
@@ -80,7 +71,6 @@
       appId: "1:838810186387:web:21e8e270693eb58401136c",
       measurementId: "G-P7EVFL1YBQ"
     };
-    // 파이어베이스 초기화 실행
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
   </script>
@@ -119,6 +109,19 @@
       transform-origin: center center;
       flex-shrink: 0;
       box-sizing: border-box;
+      /* 🌟 [추가] 깨짐/블러 현상 방지 및 GPU 하드웨어 가속 유도 */
+      will-change: transform;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transform-style: preserve-3d;
+    }
+
+    /* 🌟 [추가] 축소/확대 시 텍스트 및 조작 버튼 경계선이 자글자글해지는 현상 완벽 방지 */
+    #gameContainer * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      backface-visibility: hidden;
     }
 
     canvas {
@@ -714,7 +717,7 @@
     let animationId;
     let score = 0;
     let lastTime = 0;
-    let smoothedDelta = 16.67; // 미세 프레임 보정용 지수 필터 추가
+    let smoothedDelta = 16.67;
     let animationFrameCount = 0;
     let spawnTimer = 0;
     let currentSpawnTarget = 60;
@@ -774,18 +777,15 @@
     player.y = groundY - player.height;
     let obstacles = [];
     let dunes = [];
-    /* ─── 🛠️ 정석 오디오 라우팅 (버스 시스템) 아키텍처 ─── */
     let audioCtx = null;
     let stopBgmTimer = null;
-    // 오디오 버스 노드 정의
     let compressor = null;
     let masterGain = null;
     let normalBgmGain = null;
     let bossBgmGain = null;
     let jumpGain = null;
     let deathGain = null;
-    let sfxGain = null; // 원거리 공격, 피격 범용 효과음 버스
-    // 임시 볼륨값 저장 및 초기값 세팅 (0.0 ~ 1.0)
+    let sfxGain = null;
     const audioVolumes = {
       master: 2.7,
       normalBgm: 3,
@@ -797,32 +797,27 @@
 
     function initAudio() {
       if (audioCtx) return;
-      // 👍 지연 민감형 최적화 인스턴스 옵션 구성 (latencyHint 가 핵심)
       audioCtx = new(window.AudioContext || window.webkitAudioContext)({
         latencyHint: 'interactive'
       });
-      // 1. 디지털 피크/클리핑 왜곡 방지용 최종 안전 컴프레서 노드 생성
       compressor = audioCtx.createDynamicsCompressor();
       compressor.threshold.setValueAtTime(-16, audioCtx.currentTime);
       compressor.knee.setValueAtTime(25, audioCtx.currentTime);
       compressor.ratio.setValueAtTime(10, audioCtx.currentTime);
       compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
       compressor.release.setValueAtTime(0.15, audioCtx.currentTime);
-      // 2. 각 오디오 라우팅 버스(Gain Node) 독립 인스턴스 생성
       masterGain = audioCtx.createGain();
       normalBgmGain = audioCtx.createGain();
       bossBgmGain = audioCtx.createGain();
       jumpGain = audioCtx.createGain();
       deathGain = audioCtx.createGain();
       sfxGain = audioCtx.createGain();
-      // 3. 사용자가 슬라이더로 설정해둔 초기 볼륨 값 실시간 동기화
       masterGain.gain.setValueAtTime(audioVolumes.master, audioCtx.currentTime);
       normalBgmGain.gain.setValueAtTime(audioVolumes.normalBgm, audioCtx.currentTime);
       bossBgmGain.gain.setValueAtTime(audioVolumes.bossBgm, audioCtx.currentTime);
       jumpGain.gain.setValueAtTime(audioVolumes.jump, audioCtx.currentTime);
       deathGain.gain.setValueAtTime(audioVolumes.death, audioCtx.currentTime);
       sfxGain.gain.setValueAtTime(audioVolumes.sfx, audioCtx.currentTime);
-      // 4. 구조적인 라우팅 연결 (오디오 버스 계층 설계)
       normalBgmGain.connect(masterGain);
       bossBgmGain.connect(masterGain);
       jumpGain.connect(masterGain);
@@ -838,7 +833,6 @@
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
-      // 👍 즉시 실행을 위해 하드웨어 기반의 현재 정밀 절대 시각을 캡처
       const time = audioCtx.currentTime;
       if (type === 'jump') {
         gain.connect(jumpGain);
@@ -848,7 +842,6 @@
         osc.frequency.exponentialRampToValueToValueAtTime(600, time + 0.01);
         gain.gain.setValueAtTime(effVol, time);
         gain.gain.linearRampToValueAtTime(0, time + 0.05);
-        // 👍 메인 스레드 밀림 방지: 시간 매개변수를 직접 주입하여 즉시 칼박자 실행
         osc.start(time);
         osc.stop(time + 0.05);
       } else if (type === 'shoot') {
@@ -907,7 +900,6 @@
         osc.type = isBoss ? 'sawtooth' : 'triangle';
         const currentNotes = isBoss ? bossNotes : normalNotes;
         let effVol = 0.25;
-        // 👍 BGM 시퀀싱 루프 리듬 타임라인 보정
         const time = audioCtx.currentTime;
         osc.frequency.setValueAtTime(currentNotes[step % currentNotes.length], time);
         gain.gain.setValueAtTime(effVol, time);
@@ -969,7 +961,7 @@
       if (e) e.stopPropagation();
       globalNoticeScreen.classList.add('hidden');
     }
-
+    // 🌟 [핵심 개선] 물리적인 픽셀 그리드 정렬을 통한 흐릿함/자글자글함 원천 해결
     function resizeGame() {
       const targetWidth = 1200;
       const targetHeight = 675;
@@ -978,7 +970,18 @@
       const scaleX = windowWidth / targetWidth;
       const scaleY = windowHeight / targetHeight;
       const scale = Math.min(scaleX, scaleY);
-      gameContainer.style.transform = `scale(${scale})`;
+      // 1. 소수점 크기 렌더링 방지를 위해 실제 그려지는 크기를 정수로 계산
+      const visualWidth = targetWidth * scale;
+      const visualHeight = targetHeight * scale;
+      // 2. 부모 컨테이너 위치를 물리적 픽셀 경계선(정수)에 딱 맞춥니다.
+      const left = Math.round((windowWidth - visualWidth) / 2);
+      const top = Math.round((windowHeight - visualHeight) / 2);
+      gameContainer.style.position = 'absolute';
+      gameContainer.style.left = `${left}px`;
+      gameContainer.style.top = `${top}px`;
+      // 3. 정렬 기준점을 좌상단으로 하고 GPU 레이어로 강제 변환하여 안티앨리어싱 품질 보정
+      gameContainer.style.transformOrigin = 'top left';
+      gameContainer.style.transform = `scale(${scale}) translateZ(0)`;
     }
     window.addEventListener('resize', resizeGame);
     resizeGame();
@@ -1020,7 +1023,7 @@
       infoDiv.innerHTML = `
         <p><strong>[ 움직임(슬라이드) ]</strong> ${leftKey} / ${rightKey} &nbsp;&nbsp; <strong>[ 웅크리기(슬라이드) ]</strong> ${crouchKey} &nbsp;&nbsp; <strong>[ ESC ]</strong> 처음으로</p>
         <p><strong>[ 점프(슬라이드,터치) ]</strong> ${jumpKey} &nbsp;&nbsp; <strong>[ 공격 ]</strong> ${attackKey},터치 &nbsp;&nbsp; 
-           <span style="color: #fff034; font-weight: bold;">[ 업데이트 ] 보스 패턴</span>
+           <span style="color: #fff034; font-weight: bold;">[ 업데이트 ] 보스 패턴.</span>
         </p>
       `;
     }
@@ -1368,7 +1371,6 @@
           if (recordSection.style.display !== 'none' && gameState === 'GAMEOVER') return;
           startGame();
         } else {
-          // 👍 기존에 공격키 분기 시 playerJump()와 함께 작동하던 구조 버그 수정 및 최적화
           if (gameState === 'BOSS_BATTLE') playerShoot();
           else playerJump();
         }
@@ -1410,7 +1412,7 @@
       return (proj.x < target.x + target.width && proj.x + proj.width > target.x &&
         proj.y < target.y + target.height && proj.y + proj.height > target.y);
     }
-    // 🌟 화면 '지지직' 잔상 해결: 매 프레임 clearRect로 완전 초기화 진행 후 보스룸 레이어 추가
+
     function drawBackground() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (gameState === 'BOSS_BATTLE') {
@@ -1427,7 +1429,7 @@
       ctx.lineTo(0, canvas.height);
       ctx.fill();
     }
-    // 🌟 렌더 좌표 정수화: d.x 연산은 정밀하게 실수로 하되, 그리는 시점에 Math.round 처리
+
     function updateAndDrawDunes(timeScale = 1) {
       ctx.fillStyle = '#220b29';
       ctx.beginPath();
@@ -1446,7 +1448,7 @@
       ctx.fillStyle = '#110515';
       ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
     }
-    // 🌟 렌더 좌표 정수화: 플레이어 본체, 꼬리 효과선, 발사 무기의 좌표 튀기 보정
+
     function updateAndDrawPlayer(timeScale = 1) {
       if (gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') {
         if (isTouching) {
@@ -1535,7 +1537,7 @@
         if (p.x > canvas.width) player.projectiles.splice(i, 1);
       }
     }
-    // 🌟 렌더 좌표 정수화: 지상/공중 장애물 렌더링 시 sub-pixel 보정
+
     function updateAndDrawObstacles(timeScale, speed) {
       for (let i = 0; i < obstacles.length; i++) {
         let obs = obstacles[i];
@@ -1581,7 +1583,7 @@
         }
       }
     }
-    // 🌟 렌더 좌표 정수화: 보스 본체 및 보스 투사체의 렌더링 연산 정교화
+
     function updateAndDrawBoss(timeScale) {
       if (!boss.active) return;
       if (boss.x > canvas.width - 180 && !boss.leaving) boss.x -= 3 * timeScale;
@@ -1716,12 +1718,10 @@
         animationId = requestAnimationFrame(loop);
       }
       if (!timestamp) timestamp = performance.now();
-      if (!lastTime) lastTime = timestamp; // 첫 루프 시 시간 튀는 현상 원천 해결
+      if (!lastTime) lastTime = timestamp;
       let deltaTime = timestamp - lastTime;
-      // 순간적인 네트워크/웹뷰 랙이나 탭 변경으로 발생하는 보간 스파이크 방지
       if (deltaTime > 100) deltaTime = 16.67;
       lastTime = timestamp;
-      // 🌟 EMA 필터를 활용해 델타타임 주파수 스무딩 (144hz 및 가변 주사율 완벽 정돈)
       smoothedDelta = (smoothedDelta * 0.85) + (deltaTime * 0.15);
       const timeScale = smoothedDelta / 16.67;
       animationFrameCount += timeScale;
@@ -1792,7 +1792,6 @@
       gameOverScreen.classList.add('hidden');
       initDunes();
       cancelAnimationFrame(animationId);
-      // 🌟 리스타트 시 미세 떨림 방지를 위한 상태 초기화
       lastTime = performance.now();
       smoothedDelta = 16.67;
       animationFrameCount = 0;
