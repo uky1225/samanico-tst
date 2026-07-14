@@ -127,6 +127,9 @@
       overscroll-behavior: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
+      position: fixed; /* iOS/iPadOS 뷰포트 바운스 차단 고정 */
+      left: 0;
+      top: 0;
       width: 100%;
       height: 100%;
       margin: 0;
@@ -151,6 +154,10 @@
       overflow: hidden;
       cursor: pointer;
       box-sizing: border-box;
+      
+      /* iPad 초기 쏠림 현상을 시각적으로 방지하기 위해 로드 전까지 투명화 처리 */
+      opacity: 0;
+      transition: opacity 0.25s ease-in-out;
     }
 
     #gameContainer * {
@@ -971,7 +978,7 @@
         }
       } catch (error) {
         console.error('공지 로드 실패:', error);
-        listContainer.innerHTML = '<li style="color:#ff0055;">소식을 불러오지 못했습니다. 앱스 스크립트 웹앱 주소 및 배포 상태를 확인해주세요.</li>';
+        listContainer.innerHTML = '<li style="color:#ff0055;">소식을 불러오지 못했습니다. 앱스 스크립체 웹앱 주소 및 배포 상태를 확인해주세요.</li>';
       }
     }
     async function checkNewNotices() {
@@ -1753,12 +1760,9 @@
       if (!lastTime) lastTime = timestamp;
       let deltaTime = timestamp - lastTime;
       
-      // 기기가 백그라운드로 가거나 극단적인 끊김 발생 시 보정 제한
       if (deltaTime > 100) deltaTime = 16.67;
       lastTime = timestamp;
 
-      // 🌟 [핵심 수정] 터치 시 주사율 급변동(60Hz <-> 120Hz) 오류를 막기 위해 
-      // 필터를 거치지 않은 실시간 deltaTime 비율을 그대로 주입합니다.
       const timeScale = deltaTime / 16.67;
       animationFrameCount += timeScale;
 
@@ -1973,6 +1977,17 @@
     loadLeaderboard();
     checkNewNotices();
     
+    /* 🌟 iPadOS 뷰포트 정렬 완화 안전 딜레이 오파시티 스크립트 실행 */
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        resizeGame();
+        const container = document.getElementById('gameContainer');
+        if (container) {
+          container.style.opacity = '1';
+        }
+      }, 150); // WebKit 엔진이 가로 해상도를 안정적으로 매핑할 시간을 보장
+    });
+
     accurateTimer(() => {
       if (gameState === 'START' && !startScreen.classList.contains('hidden')) {
         loadLeaderboard();
