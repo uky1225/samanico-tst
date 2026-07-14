@@ -19,29 +19,41 @@
   <link rel="apple-touch-icon" href="IMG_0012.png">
 
   <script>
-    // 1. 서비스 워커 등록 (오프라인 모드)
+    // 🌟 [최적화] 서비스 워커 등록 및 실시간 업데이트 연동 객체 선언
+    let swRegistration = null;
+    let lastModified = null;
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js')
-        .then(() => console.log("오프라인 모드 활성화됨"));
+        .then((reg) => {
+          console.log("오프라인 모드 활성화됨");
+          swRegistration = reg; // 🌟 서비스 워커 인스턴스 보관
+        })
+        .catch(err => console.error("서비스 워커 등록 실패:", err));
     }
 
-    // 🌟 [실시간 코드 변경 감지 및 자동 새로고침 스크립트]
-    let lastModified = null;
+    // 🌟 [최적화] 실시간 코드 변경 감지 및 동기식 캐시 업데이트 스크립트
     setInterval(async () => {
       try {
         // 서비스 워커와 브라우저 캐시를 우회하기 위해 URL 뒤에 랜덤한 시간 값을 붙여 요청을 보냅니다.
         const cacheBusterUrl = window.location.href.split('?')[0].split('#')[0] + '?update_check=' + Date.now();
-        
-        const response = await fetch(cacheBusterUrl, { 
+        const response = await fetch(cacheBusterUrl, {
           method: 'HEAD',
           cache: 'no-cache' // 브라우저 캐싱 강제 무시
         });
-        
         const currentModified = response.headers.get('Last-Modified');
-        
-        // 이전에 받아온 수정 시간과 방금 받아온 수정 시간이 다르면 새로고침을 실행합니다.
+
+        // 이전에 받아온 수정 시간과 방금 받아온 수정 시간이 다르면 업데이트를 처리합니다.
         if (lastModified && lastModified !== currentModified) {
-          console.log("새로운 코드 업데이트가 감지되어 새로고침합니다!");
+          console.log("새로운 코드 업데이트가 감지되었습니다!");
+
+          if (swRegistration) {
+            console.log("서비스 워커 최신 자원 다운로드 강제 유도 중...");
+            // 🌟 서비스 워커의 update()를 강제 호출하여 sw.js가 즉시 새 캐시를 구성하게 만듭니다.
+            await swRegistration.update();
+          }
+          
+          console.log("새로고침을 실행하여 변경된 화면을 적용합니다.");
           window.location.reload();
         }
         lastModified = currentModified;
@@ -49,7 +61,7 @@
         // 네트워크 연결이 잠시 끊겼거나 로컬 서버가 다운되었을 때 발생하는 에러는 콘솔 경고로만 남깁니다.
         console.warn("코드 업데이트 감지 중 오류 발생 (오프라인 상태일 수 있음):", error);
       }
-    }, 2000); // 2초마다 감지 실행 (부담이 적은 HEAD 요청을 사용합니다)
+    }, 2000); // 2초마다 감지 실행
   </script>
 
   <script type="module">
@@ -698,7 +710,6 @@
     const playerNameInput = document.getElementById('playerName');
     const saveScoreBtn = document.getElementById('saveScoreBtn');
     const skipSaveBtn = document.getElementById('skipSaveBtn');
-    
     let gameState = 'START';
     let animationId;
     let score = 0;
@@ -1399,10 +1410,9 @@
       return (proj.x < target.x + target.width && proj.x + proj.width > target.x &&
         proj.y < target.y + target.height && proj.y + proj.height > target.y);
     }
-
     // 🌟 화면 '지지직' 잔상 해결: 매 프레임 clearRect로 완전 초기화 진행 후 보스룸 레이어 추가
     function drawBackground() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height); 
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (gameState === 'BOSS_BATTLE') {
         ctx.fillStyle = 'rgba(255, 0, 0, 0.15)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1417,7 +1427,6 @@
       ctx.lineTo(0, canvas.height);
       ctx.fill();
     }
-
     // 🌟 렌더 좌표 정수화: d.x 연산은 정밀하게 실수로 하되, 그리는 시점에 Math.round 처리
     function updateAndDrawDunes(timeScale = 1) {
       ctx.fillStyle = '#220b29';
@@ -1437,7 +1446,6 @@
       ctx.fillStyle = '#110515';
       ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
     }
-
     // 🌟 렌더 좌표 정수화: 플레이어 본체, 꼬리 효과선, 발사 무기의 좌표 튀기 보정
     function updateAndDrawPlayer(timeScale = 1) {
       if (gameState === 'PLAYING' || gameState === 'BOSS_BATTLE') {
@@ -1527,7 +1535,6 @@
         if (p.x > canvas.width) player.projectiles.splice(i, 1);
       }
     }
-
     // 🌟 렌더 좌표 정수화: 지상/공중 장애물 렌더링 시 sub-pixel 보정
     function updateAndDrawObstacles(timeScale, speed) {
       for (let i = 0; i < obstacles.length; i++) {
@@ -1574,7 +1581,6 @@
         }
       }
     }
-
     // 🌟 렌더 좌표 정수화: 보스 본체 및 보스 투사체의 렌더링 연산 정교화
     function updateAndDrawBoss(timeScale) {
       if (!boss.active) return;
@@ -1712,15 +1718,12 @@
       if (!timestamp) timestamp = performance.now();
       if (!lastTime) lastTime = timestamp; // 첫 루프 시 시간 튀는 현상 원천 해결
       let deltaTime = timestamp - lastTime;
-      
       // 순간적인 네트워크/웹뷰 랙이나 탭 변경으로 발생하는 보간 스파이크 방지
       if (deltaTime > 100) deltaTime = 16.67;
       lastTime = timestamp;
-
       // 🌟 EMA 필터를 활용해 델타타임 주파수 스무딩 (144hz 및 가변 주사율 완벽 정돈)
       smoothedDelta = (smoothedDelta * 0.85) + (deltaTime * 0.15);
       const timeScale = smoothedDelta / 16.67;
-      
       animationFrameCount += timeScale;
       drawBackground();
       updateAndDrawDunes(timeScale);
@@ -1789,10 +1792,9 @@
       gameOverScreen.classList.add('hidden');
       initDunes();
       cancelAnimationFrame(animationId);
-      
       // 🌟 리스타트 시 미세 떨림 방지를 위한 상태 초기화
       lastTime = performance.now();
-      smoothedDelta = 16.67; 
+      smoothedDelta = 16.67;
       animationFrameCount = 0;
       spawnTimer = 0;
       currentSpawnTarget = 60;
