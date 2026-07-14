@@ -228,7 +228,6 @@
       transition: left 0.1s linear;
       box-sizing: border-box;
     }
-    }
 
     #progressGoal {
       position: absolute;
@@ -272,6 +271,7 @@
       }
     }
 
+    /* 기본값: 안드로이드 / 크롬용 (블러 수치를 높이고 채도를 올려 아이패드 느낌 연출) */
     .overlayScreen {
       position: absolute;
       top: 0;
@@ -279,8 +279,8 @@
       width: 100%;
       height: 100%;
       background: rgba(14, 8, 22, 0.6);
-      backdrop: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -289,6 +289,14 @@
       text-align: center;
       color: #fceabb;
       transition: opacity 0.5s ease;
+    }
+
+    /* 아이패드(iOS / WebKit) 전용: 마음에 드셨던 기존 12px 수치 유지 */
+    @supports (-webkit-touch-callout: none) {
+      .overlayScreen {
+        backdrop-filter: blur(10px) saturate(100%);
+        -webkit-backdrop-filter: blur(10px) saturate(100%);
+      }
     }
 
     #globalNoticeScreen {
@@ -1881,10 +1889,26 @@
       bossWarningUI.classList.remove('warning-active');
       keyStates.moveLeft = false;
       keyStates.moveRight = false;
-      if (player.isCrouching) {
-        player.isCrouching = false;
-        player.height = player.normalHeight;
-      }
+      // 🌟 [추가] 장애물, 보스, 플레이어 위치를 첫 시작 화면 상태로 완전 초기화
+      obstacles = [];
+      boss.active = false;
+      boss.leaving = false;
+      boss.projectiles = [];
+      player.x = 150;
+      player.isCrouching = false;
+      player.height = player.normalHeight;
+      player.y = groundY - player.height;
+      player.vy = 0;
+      player.trail = [];
+      player.projectiles = [];
+      // 🌟 [추가] 캔버스를 깨끗이 비운 후 초기 배경과 플레이어를 다시 그립니다.
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(gameScale, gameScale);
+      drawBackground();
+      initDunes();
+      updateAndDrawDunes();
+      updateAndDrawPlayer();
       setTimeout(() => playerNameInput.focus(), 50);
     }
 
