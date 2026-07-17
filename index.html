@@ -485,7 +485,6 @@
       cursor: default;
     }
 
-    /* 🌟 중요 수정: touch-action 및 user-select 강제 지정으로 가상 키보드 완전 활성화 */
     #recordSection input {
       padding: 1cqh 1.5cqw;
       font-size: 1.6cqw;
@@ -1465,6 +1464,7 @@
       if (e.code === keyBindings.moveLeft || e.code === 'ArrowLeft') keyStates.moveLeft = false;
       if (e.code === keyBindings.moveRight || e.code === 'ArrowRight') keyStates.moveRight = false;
     });
+
     /* 🌟 중요 수정: 탭 전환, 창 포커스 아웃/인 시 모든 조작 및 캐릭터 상태를 확실히 리셋 */
     function resetAllInputStates() {
       if (typeof keyStates !== 'undefined') {
